@@ -127,8 +127,9 @@ object LoadSmallFiles {
     import org.apache.spark.sql.functions._
     val toInt = udf[Int, String]( x => if (x=="") 0 else x.toInt)
     val toDouble = udf[Double, String](  x => if (x=="") 0.0 else  x.replaceAll(",",".").toDouble)
-    
+
     val schemaFarmaticV =
+      "pharmacyCode\n" +
         "recordType\n" +
         "dispensationCode\n" +
         "units\n" +
@@ -169,23 +170,18 @@ object LoadSmallFiles {
         "valeConsumption\n" +
         "euroGeneration\n" +
         "euroConsumption"
+
+    val schemaSplit =schemaFarmaticV.split("\n")
     val schema =
       StructType(
-        schemaFarmaticV.split("\n").map(fieldName => StructField(fieldName, StringType, true)))
-
+        schemaSplit.map(fieldName => StructField(fieldName, StringType, true)))
 
     def createRow(p: Array[String]): Row = {
 
       def getNoQuotesRow (p: Array[String]) =  Row.fromSeq (p.map (e => e.replaceAll("\"","")))
 
-      //TODO extact hardcoded 40
-      if (p.length < 40) {
-        val ext =p ++  Array.fill[String](40-p.length)("")
-        val res = getNoQuotesRow (ext)
-        res
-      } else {
-        getNoQuotesRow (p)
-      }
+
+      if (p.length < schemaSplit.length) getNoQuotesRow (p ++  Array.fill[String](schemaSplit.length-p.length)("")) else getNoQuotesRow (p)
 
     }
 
@@ -229,33 +225,37 @@ object LoadSmallFiles {
     deleteOutput (output)
     val t0 = System.nanoTime
     val dfWholeTextFiles = casting (wholeTextFilesLoad)
+
+   // dfWholeTextFiles.show()
     write (dfWholeTextFiles)
     val t1 = System.nanoTime()
 
     deleteOutput (output)
     val t2 = System.nanoTime
     val dfSparkCsv= hiveCtx.read.format("com.databricks.spark.csv").option("delimiter","|").option("header","false").schema(schema).load(s"${input}/*")
+    //dfSparkCsv.show()
     val df = casting (dfSparkCsv)
+    //df.show()
     write (df)
     val t3 = System.nanoTime()
 
-// TESTING STREAMING ---
-//    deleteOutput (output)
-//    val ds = ssc.socketTextStream("localhost", 7777)
-//    ds.foreachRDD { rdd =>
-//      val t4 = System.nanoTime
-//      val dfFromSsc = createDf(rdd)
-//      val df = casting (dfFromSsc)
-//      write (df, rdd.id.toString)
-//      val t5 = System.nanoTime
-//      thelog.info (s"---------> :: streaming ::  Elapsed time: ${BigDecimal((t5-t4)*1e-9).setScale(3, BigDecimal.RoundingMode.HALF_UP)} s ::")
-//    }
+    // TESTING STREAMING ---
+    //    deleteOutput (output)
+    //    val ds = ssc.socketTextStream("localhost", 7777)
+    //    ds.foreachRDD { rdd =>
+    //      val t4 = System.nanoTime
+    //      val dfFromSsc = createDf(rdd)
+    //      val df = casting (dfFromSsc)
+    //      write (df, rdd.id.toString)
+    //      val t5 = System.nanoTime
+    //      thelog.info (s"---------> :: streaming ::  Elapsed time: ${BigDecimal((t5-t4)*1e-9).setScale(3, BigDecimal.RoundingMode.HALF_UP)} s ::")
+    //    }
 
-//      ssc.start()
-//      ssc.awaitTermination()
+    //      ssc.start()
+    //      ssc.awaitTermination()
 
-    thelog.info (s":: wholeTextFile :: partitions: ${dfWholeTextFiles.rdd.partitions.size} :: Elapsed time: ${BigDecimal((t1-t0)*1e-9).setScale(3, BigDecimal.RoundingMode.HALF_UP)} s ::")
-    thelog.info (s":: spark.csv :: partitions: ${dfSparkCsv.rdd.partitions.size} :: Elapsed time: ${BigDecimal((t3-t2)*1e-9).setScale(3, BigDecimal.RoundingMode.HALF_UP)} s ::")
+   thelog.info (s":: wholeTextFile :: partitions: ${dfWholeTextFiles.rdd.partitions.size} :: Elapsed time: ${BigDecimal((t1-t0)*1e-9).setScale(3, BigDecimal.RoundingMode.HALF_UP)} s ::")
+   thelog.info (s":: spark.csv :: partitions: ${dfSparkCsv.rdd.partitions.size} :: Elapsed time: ${BigDecimal((t3-t2)*1e-9).setScale(3, BigDecimal.RoundingMode.HALF_UP)} s ::")
 
     sc.stop()
   }
