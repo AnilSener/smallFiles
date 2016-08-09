@@ -1,7 +1,18 @@
-1. Install gradle 2.12
-2. Install last version of groovy
-3. Install NIFI (Tested in version 0.8)
-4. build nifi-client project /opt/nifi-client
-5. run "gradle shadowJar it will create a jar at build/libs/nifi-client-<version>-all.jar that you can put on a Java
-or Groovy classpath:  groovy -cp build/libs/nifi-client-0.3-all.jar yourScript.groovy
-6. Fill data collection.properties according to your preferences
+
+The goal of the PoC is to make a complete end to end flow for  reading and writing data back to HDFS with a small transformation  using small files in Farmatic and Pulso windows remote directory with Apache NiFi and  two methods for loading small files in Apache Spark to decide which of both is the best choice.
+
+
+Dependencies:
+Common:
+Java 1.8
+NiFi Flow:
+NiFi: 0.8 (compiled from final source code master)
+Groovy: 2.4.5
+Gradle: 2.12
+Spark process:
+Scala: 2.10.5
+Sbt: 0.13
+Spark: 1.6.0 
+
+
+Fill application.properties according to your preferences

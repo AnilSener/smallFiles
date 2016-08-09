@@ -24,9 +24,9 @@ GROOVY_STATUS=${?}
 echo "NIFI Client exited with: ${GROOVY_STATUS}"
 if [ $GROOVY_STATUS -eq 0 ]
 then
-	echo "Data Collection Process is finalized successfully."
+	echo "*****Data Collection Process is finalized successfully.*****"
 	exit 0
 else
-	echo "Data Collection Process is terminated with failure."
+	echo "*****Data Collection Process is terminated with failure.*****"
 	exit 1
 fi

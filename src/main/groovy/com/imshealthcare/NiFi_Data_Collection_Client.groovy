@@ -92,6 +92,7 @@ class NiFi_Data_Collection_Client {
 		nifi.processors.each{p -> p.getValue().start()}
 		int activeThreadCount=0;
 		String queued="";
+		int time=0;
 		while(true){
 		//Wait
             try{
@@ -103,6 +104,7 @@ class NiFi_Data_Collection_Client {
 					queued=nifi.controller.getQueued()
 					System.out.println("Active Thread Count: "+activeThreadCount)
 					System.out.println("Queued Data: "+queued)
+					time+=period
 				}
                 else{
                     System.out.println("FLOW_VALID_PER_IN_SECONDS parameter that you have specified isn't a natural number. Please define an natural number in seconds.");
@@ -121,6 +123,7 @@ class NiFi_Data_Collection_Client {
             System.out.println("Validation Result:"+valRes);
             if(valRes) break;
 		}
+		System.out.println("****Data Collection Flow is completed in "+time+" seconds.****")
 		nifi.processors.each{p -> p.getValue().stop()}
         nifi.templates.get(template_name).delete()
 		//nifi.processors.clear()
